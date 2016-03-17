@@ -12,7 +12,7 @@
 #define FAILURE !SUCCESS
 #define NUMSIZE 4 //size of each float in the file
 
-void calculate_difference(struct timespec start, struct timespec end) {
+long calculate_difference(struct timespec start, struct timespec end) {
 	const int DAS_NANO_SECONDS_IN_SEC = 1000000000;
 	long timeElapsed_s = end.tv_sec - start.tv_sec;
 	long timeElapsed_n = end.tv_nsec - start.tv_nsec;
@@ -21,6 +21,7 @@ void calculate_difference(struct timespec start, struct timespec end) {
 		timeElapsed_s--;
 	}
 	printf("Time: %ld.%09ld secs \n", timeElapsed_s, timeElapsed_n);
+	return timeElapsed_s;
 }
 
 //Checks if the coords are within the valid limits
@@ -54,23 +55,43 @@ int parallel_motion_estimation(long num_coords, int seconds, char *file_name, si
 	}
 	#pragma omp parallel shared(file_name)
 	{
-		long total_coords = fsize(file_name) / NUMSIZE / 3;
+		long exam_coords = fsize(file_name) / NUMSIZE / 3; //initialization of coordinations we are going to examine= total number
+		if(num_coords >=0 && num_coords<exam_coords){
+		exam_coords=num_coords;				
+	    }
+		if(num_coords>total_coords){
+		printf("You have asked for more lines than the ones available. All the lines are going to be examined.");
+	}
 		int total_threads = omp_get_num_threads();
 		int tid = omp_get_thread_num();
 		FILE *file_ptr = fopen(file_name, "rb");
-
+        struct timespec start, current;
+		
 		// Set which coords each thread will process
-		long coord_from = (int)total_coords/total_threads * tid;
-		long coord_to = (int)total_coords/total_threads * (tid+1) - 1;
+		long coord_from = (int)exam_coords_coords/total_threads * tid;
+		long coord_to = (int)exam_coords_coords/total_threads * (tid+1) - 1;
 		if(tid+1 == total_threads)
 			coord_to += total_coords % total_threads;
 
 		fseek(file_ptr, 3*coord_from*sizeof(float), SEEK_SET);
 		long coords_read;
 		long valid_collisions=0;
+		if(tid==0){
+			
+			clock_gettime(CLOCK_MONOTONIC, &start);			
+		}
 		for(coords_read=coord_from; coords_read<coord_to+1; coords_read++) {
 			if(process_coords(file_ptr)==0)
 				valid_collisions++;
+			if(tid==0){
+				clock_gettime(CLOCK_MONOTONIC, &current);
+				if(calculate_difference(start,current)>max_seconds){
+			    printf("Reached maximum time limit.");
+			    break;
+				}
+		  		
+			}
+			     
 		}
 		fclose(file_ptr);
 		printf("Thread %d, valid collisions %ld\n", tid, valid_collisions);
@@ -78,19 +99,33 @@ int parallel_motion_estimation(long num_coords, int seconds, char *file_name, si
 	return(SUCCESS);
 }
 
-int linear_motion_estimation(long num_coords, int seconds, char *file_name) {
+int linear_motion_estimation(long num_coords, int max_seconds, char *file_name) {
 	FILE *file_ptr = fopen(file_name, "rb");
 	if(!file_ptr) {
 		printf("Unable to open file!");
 		return(FAILURE);
 	}
-
-	long total_coords = fsize(file_name) / NUMSIZE / 3;
+    struct timespec start, current;
+	long exam_coords = fsize(file_name) / NUMSIZE / 3; //initialization of coordinations we are going to examine= total number
 	long curr_coord;
 	long valid_collisions=0;
-	for(curr_coord=0; curr_coord<total_coords; curr_coord++) {
+	if(num_coords >=0 && num_coords<total_coords){
+		exam_coords=num_coords;				
+	}
+	if(num_coords>total_coords){
+		printf("You have asked for more lines than the ones available. All the lines are going to be examined.");
+	}
+	if(max_seconds <= -1)
+		max_seconds=1000000;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for(curr_coord=0; curr_coord<exam_coords; curr_coord++) {
 		if(process_coords(file_ptr)==0)
 			valid_collisions++;
+		clock_gettime(CLOCK_MONOTONIC, &current);
+		if(calculate_difference(start,current)>max_seconds){
+			printf("Reached maximum time limit.");
+			break;
+		}
 	}
 	fclose(file_ptr);
 	printf("Linear Examine -> Valid collisions: %ld\n", valid_collisions);
