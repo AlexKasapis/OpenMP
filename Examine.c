@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <omp.h>
+#include <mpi.h>
 
 #define MIN_VALUE 12
 #define MAX_VALUE 30
@@ -122,12 +123,18 @@ int parallel_motion_estimation(long num_coords, int max_seconds, char *file_name
 	return(SUCCESS);
 }
 
+
 int linear_motion_estimation(long num_coords, int max_seconds, char *file_name) {
+
+	
+   
+
 	FILE *file_ptr = fopen(file_name, "rb");
 	if(!file_ptr) {
 		printf("Unable to open file!\n");
 		return(FAILURE);
 	}
+	
 
     struct timespec start, current;
 	long exam_coords = fsize(file_name) / sizeof(float) / 3; //initialization of coordinations we are going to examine= total number
@@ -150,7 +157,57 @@ int linear_motion_estimation(long num_coords, int max_seconds, char *file_name) 
 	}
 	fclose(file_ptr);
 	printf("Linear Examine -> Valid collisions: %ld\n", valid_collisions);
+    
 	return(SUCCESS);
+	
+}
+//3rd week progress
+int ompi_linear_estimation(long num_coords, int max_seconds, char *file_name){
+	// Check if file exists
+	if(access(file_name, F_OK) == -1) {
+		printf("File was not found!\n");
+		return(FAILURE);
+	}
+
+	MPI_Init(0,NULL);
+	int w_rank;//process rank
+	MPI_Comm_rank(MPI_COMM_WORLD, &w_rank);
+	int w_size;//number of processes
+	MPI_Comm_size(MPI_COMM_WORLD,&w_size);
+	long *succesful_col;
+	if(w_rank==0){
+
+		 succesful_col= malloc(sizeof(long)*w_size); 
+		
+		
+	}
+	//initialization of coordinations we are going to examine= total number
+	long exam_coords = fsize(file_name) / sizeof(float) / 3;
+	
+	long offset= w_rank * (fsize(file_name)/w_size);
+	long chunk_size= fsize(file_name)/w_size;
+    FILE *file = fopen(file_name,"rb");
+	fseek(file,offset, SEEK_SET);
+	 long counter=0;
+	for(long bytes_read=0; bytes_read<chunk_size; bytes_read+=(3*sizeof(float))){
+		 if(process_coords(file)==SUCCESS){
+			counter++;
+		 }		
+	}
+	
+	MPI_Gather(&counter,1,MPI_LONG, succesful_col,1, MPI_LONG,0,MPI_COMM_WORLD);
+	if(w_rank==0){
+		long final_count=0;
+		for(int i=0;i<w_size;i++){
+			final_count+=succesful_col[i];
+		}
+		printf("number of collisions: %ld",final_count); 
+	}
+
+
+
+	MPI_Finalize();
+	return SUCCESS;
 }
 
 /*
@@ -186,3 +243,4 @@ int main(int argc, char *argv[]) {
 		return(FAILURE);
 	}
 }
+
