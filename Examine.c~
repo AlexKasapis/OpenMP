@@ -71,8 +71,6 @@ off_t fsize(const char *filename) {
 
 int parallel_motion_estimation(long num_coords, int max_seconds, char *file_name, int threads) {
 	// Check if file exists
-	long int sum;
-	sum=0;
 	if(access(file_name, F_OK) == -1) {
 		printf("File was not found!\n");
 		return(FAILURE);
