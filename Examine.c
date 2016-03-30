@@ -130,7 +130,7 @@ int parallel_motion_estimation(long num_coords, int max_seconds, char *file_name
 		sum+=valid_collisions;} //sums the total collisions of all threads
 		
 		
-		}
+	#pragma omp master	
 	printf("Total valid collisions of all threads: %ld\n",sum);
 	}
 	return(SUCCESS);
@@ -202,7 +202,8 @@ int ompi_linear_estimation(long num_coords, int max_seconds, char *file_name){
     FILE *file = fopen(file_name,"rb");
 	fseek(file,offset, SEEK_SET);
 	 long counter=0;
-	for(long bytes_read=0; bytes_read<chunk_size; bytes_read+=(3*sizeof(float))){
+	 long bytes_read;
+	for( bytes_read=0; bytes_read<chunk_size; bytes_read+=(3*sizeof(float))){
 		 if(process_coords(file)==SUCCESS){
 			counter++;
 		 }		
@@ -211,7 +212,8 @@ int ompi_linear_estimation(long num_coords, int max_seconds, char *file_name){
 	MPI_Gather(&counter,1,MPI_LONG, succesful_col,1, MPI_LONG,0,MPI_COMM_WORLD);
 	if(w_rank==0){
 		long final_count=0;
-		for(int i=0;i<w_size;i++){
+		int i;
+		for( i=0;i<w_size;i++){
 			final_count+=succesful_col[i];
 		}
 		printf("number of collisions: %ld",final_count); 

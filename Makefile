@@ -1,21 +1,22 @@
-CC= gcc
-CFLAGS= -wall -g
-INCLUDES= -I/path/to/custom/include
-LIBS=-L/path/to/custom/lib
+CC = gcc
+CC1 = mpicc
+CFLAGS = -Wall -g
 
-all: Examine Generator
+all: Generate Examine
 
-Examine: Examine.o
-    $(CC) $(LIBS) -o Examine
+Generate: generator.c
+	$(CC) $(CFLAGS) -o generator generator.c
+	./generator data 15000000
 
-Generator: Generator.o
-    $(CC) $(LIBS) -o Generator
 
-Examine.o: Examine.c 
-    $(CC) $(CFLAGS) $(INCLUDES) -c Examine.c
 
-Generator.o: Generator.c 
-    $(CC) $(CFLAGS) $(INCLUDES) -c Generator.c
+Examine: Examine.c Generate
+	$(CC1) -fopenmp $(CFLAGS) -o Examine Examine.c
+	./Examine -1 -1 data -1 -1
 
-clean:
-    rm-f Generator Examine*.o core.*
+
+clean: 
+	rm ./generator
+	rm ./Examine
+	rm *.o
+
