@@ -432,10 +432,6 @@ int ompi_linear_estimation(long num_coords, int max_seconds, char *file_name){
 	MPI_Comm_rank(MPI_COMM_WORLD, &w_rank);
 	int w_size;//number of processes
 	MPI_Comm_size(MPI_COMM_WORLD,&w_size);
-	if(w_rank>w_size)
-	{
-		MPI_Finalize();
-	}
 	long *succesful_col;
 	if(w_rank==0){
 

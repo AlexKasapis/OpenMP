@@ -11,7 +11,7 @@ Generate: generator.c
 
 
 Examine: Examine.c Generate
-	$(CC1) -fopenmp $(CFLAGS) -o Examine Examine.c #-std=gnu99
+	$(CC1) -fopenmp $(CFLAGS) -o Examine Examine.c -std=gnu99
 	mpiexec -np 4 ./Examine -1 -1 data -1 -1 
 
 
