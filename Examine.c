@@ -443,9 +443,8 @@ int ompi_linear_estimation(long num_coords, int max_seconds, char *file_name){
 		
 		
 	}
-	//initialization of coordinations we are going to examine= total number
-	long exam_coords = fsize(file_name) / sizeof(float) / 3;
 	
+	//initialization of coordinations we are going to examine= total number	
 	long offset= w_rank * (fsize(file_name)/w_size);
 	long chunk_size= fsize(file_name)/w_size;
     FILE *file = fopen(file_name,"rb");
@@ -494,7 +493,7 @@ int main(int argc, char *argv[]) {
 			return(FAILURE);
 		struct timespec start, end;
 		
-		/*
+		
 		// Run the linear (non-MPI)
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		linear_estimation(atoi(argv[1]), atoi(argv[2]), argv[3]);
@@ -503,7 +502,7 @@ int main(int argc, char *argv[]) {
 		calculate_difference(start, end, 1);
 
 		printf("\n");
-
+		/*
 		// Run the linear (MPI)
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		ompi_linear_estimation(atoi(argv[1]), atoi(argv[2]), argv[3]);
@@ -512,14 +511,14 @@ int main(int argc, char *argv[]) {
 		calculate_difference(start, end, 1);
 		
 		printf("\n");
-		
+		*/
 		// Run the parallel (Non-MPI)
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		parallel_estimation(atoi(argv[1]), atoi(argv[2]), argv[3], atoi(argv[4]));
 		clock_gettime(CLOCK_MONOTONIC, &end);
 		printf("Non-MPI Parallel motion estimation total ");
 		calculate_difference(start, end, 1);
-		
+		/*
 		printf("\n");
 		
 		// Run the parallel (MPI)

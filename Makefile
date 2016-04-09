@@ -6,17 +6,12 @@ all: Generate Examine
 
 Generate: generator.c
 	$(CC) $(CFLAGS) -o generator generator.c
-	./generator data 15000000
-
-
+	./generator datafile 15000000
 
 Examine: Examine.c Generate
-	$(CC1) -fopenmp $(CFLAGS) -o Examine Examine.c #-std=gnu99
-	mpiexec -np 4 ./Examine -1 -1 data -1 -1 
-
+	$(CC1) -fopenmp $(CFLAGS) -o Examine Examine.c -std=gnu11
 
 clean: 
 	rm ./generator
 	rm ./Examine
 	rm *.o
-
