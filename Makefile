@@ -6,7 +6,7 @@ all: clean generate examine
 	
 clean: 
 	rm -f ./generator
-	rm -f ./Examine
+	rm -f ./examine
 	rm -f *.o
 
 generate: generator.c
